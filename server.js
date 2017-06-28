@@ -2,10 +2,8 @@
 
 const soap = require('soap');
 
-class NetSuite
-{
-    constructor(options)
-    {
+class NetSuite {
+    constructor(options) {
         this.client = {};
         this.accountId = options.accountId;
         this.baseUrl = options.baseUrl || 'https://webservices.netsuite.com/services/NetSuitePort_2016_2';
@@ -17,31 +15,23 @@ class NetSuite
     }
 }
 
-NetSuite.prototype.initialize = function(callback)
-{
-    soap.createClient(this.wsdlPath, {}, (err, client) =>
-    {
-        if (err)
-        {
+NetSuite.prototype.initialize = function (callback) {
+    soap.createClient(this.wsdlPath, {}, (err, client) => {
+        if (err) {
             console.log('Error: ' + err);
             return;
         }
 
-        client.addSoapHeader(
-        {
-            applicationInfo:
-            {
+        client.addSoapHeader({
+            applicationInfo: {
                 applicationId: this.appId
             },
-            passport:
-            {
+            passport: {
                 account: this.accountId,
                 email: this.username,
                 password: this.password,
-                role:
-                {
-                    attributes:
-                    {
+                role: {
+                    attributes: {
                         internalId: this.roleId
                     }
                 }
@@ -54,14 +44,10 @@ NetSuite.prototype.initialize = function(callback)
     });
 };
 
-NetSuite.prototype.get = function(type, internalId, callback)
-{
-    let wrappedData =
-    {
-        ':record':
-        {
-            'attributes':
-            {
+NetSuite.prototype.get = function (type, internalId, callback) {
+    let wrappedData = {
+        ':record': {
+            'attributes': {
                 'xmlns:listRel': 'urn:relationships_2016_2.lists.webservices.netsuite.com',
                 'xmlns:platformCore': 'urn:core_2016_2.platform.webservices.netsuite.com',
                 'xsi:type': 'platformCore:RecordRef',
@@ -74,14 +60,10 @@ NetSuite.prototype.get = function(type, internalId, callback)
     this.client.get(wrappedData, callback);
 };
 
-NetSuite.prototype.update = function(type, internalId, fields, callback)
-{
-    let wrappedData =
-    {
-        ':record':
-        {
-            'attributes':
-            {
+NetSuite.prototype.update = function (type, internalId, fields, callback) {
+    let wrappedData = {
+        ':record': {
+            'attributes': {
                 'xmlns:listRel': 'urn:relationships_2016_2.lists.webservices.netsuite.com',
                 'xmlns:platformCore': 'urn:core_2016_2.platform.webservices.netsuite.com',
                 'xsi:type': 'listRel:' + type,
@@ -90,22 +72,68 @@ NetSuite.prototype.update = function(type, internalId, fields, callback)
         }
     };
 
-    for (let property in fields)
-    {
-        if (property === 'customFieldList')
-        {
-            for (let customFieldProperty in fields.customFieldList)
-            {
+    for (let property in fields) {
+        if (property === 'customFieldList') {
+            for (let customFieldProperty in fields.customFieldList) {
                 //wrappedData[':record'].attributes['listRel:' + property] = fields[property];
             }
-        }
-        else
-        {
+        } else {
             wrappedData[':record'].attributes['listRel:' + property] = fields[property];
         }
     }
 
     this.client.update(wrappedData, callback);
+};
+
+
+NetSuite.prototype.upsert = function (type, internalId, externalId, fields, callback) {
+    let wrappedData = {
+        ':record': {
+            'attributes': {
+                'xmlns:listRel': 'urn:relationships_2016_2.lists.webservices.netsuite.com',
+                'xmlns:platformCore': 'urn:core_2016_2.platform.webservices.netsuite.com',
+                'xsi:type': 'listRel:' + type,
+                'internalId': internalId,
+                'externalId': externalId
+            }
+        }
+    };
+
+    for (let property in fields) {
+        if (property === 'customFieldList') {
+            for (let customFieldProperty in fields.customFieldList) {
+                //wrappedData[':record'].attributes['listRel:' + property] = fields[property];
+            }
+        } else {
+            wrappedData[':record'].attributes['listRel:' + property] = fields[property];
+        }
+    }
+
+    this.client.upsert(wrappedData, callback);
+};
+
+NetSuite.prototype.add = function (type, fields, callback) {
+    let wrappedData = {
+        ':record': {
+            'attributes': {
+                'xmlns:listRel': 'urn:relationships_2016_2.lists.webservices.netsuite.com',
+                'xmlns:platformCore': 'urn:core_2016_2.platform.webservices.netsuite.com',
+                'xsi:type': 'listRel:' + type,
+            }
+        }
+    };
+
+    for (let property in fields) {
+        if (property === 'customFieldList') {
+            for (let customFieldProperty in fields.customFieldList) {
+                //wrappedData[':record'].attributes['listRel:' + property] = fields[property];
+            }
+        } else {
+            wrappedData[':record'].attributes['listRel:' + property] = fields[property];
+        }
+    }
+
+    this.client.add(wrappedData, callback);
 };
 
 module.exports = NetSuite;
