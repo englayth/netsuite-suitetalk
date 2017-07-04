@@ -44,7 +44,8 @@ NetSuite.prototype.initialize = function (callback) {
     });
 };
 
-NetSuite.prototype.get = function (type, internalId, callback) {
+// This is to pass in the needed operation and called dynamically.
+NetSuite.prototype.performOperation = function (operation, type, fields, callback) {
     let wrappedData = {
         ':record': {
             'attributes': {
@@ -52,10 +53,48 @@ NetSuite.prototype.get = function (type, internalId, callback) {
                 'xmlns:platformCore': 'urn:core_2016_2.platform.webservices.netsuite.com',
                 'xsi:type': 'platformCore:RecordRef',
                 'type': type,
-                'internalId': internalId
             }
         }
     };
+
+    for (let property in fields) {
+        if (property === 'customFieldList') {
+            for (let customFieldProperty in fields.customFieldList) {
+                //wrappedData[':record'].attributes['listRel:' + property] = fields[property];
+            }
+        } else {
+            wrappedData[':record'].attributes['listRel:' + property] = fields[property];
+        }
+    }
+
+    //console.log(wrappedData);
+
+    this.client[operation](wrappedData, callback);
+};
+
+NetSuite.prototype.get = function (type, fields, callback) {
+    let wrappedData = {
+        ':record': {
+            'attributes': {
+                'xmlns:listRel': 'urn:relationships_2016_2.lists.webservices.netsuite.com',
+                'xmlns:platformCore': 'urn:core_2016_2.platform.webservices.netsuite.com',
+                'xsi:type': 'platformCore:RecordRef',
+                'type': type,
+            }
+        }
+    };
+
+    for (let property in fields) {
+        if (property === 'customFieldList') {
+            for (let customFieldProperty in fields.customFieldList) {
+                //wrappedData[':record'].attributes['listRel:' + property] = fields[property];
+            }
+        } else {
+            wrappedData[':record'].attributes['listRel:' + property] = fields[property];
+        }
+    }
+
+    //console.log(wrappedData);
 
     this.client.get(wrappedData, callback);
 };
